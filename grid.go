@@ -11,6 +11,12 @@ func index(row, col int) int {
 	return col + row*9
 }
 
+func rc(i int) (int, int) {
+	row := i / 9
+	col := i % 9
+	return row, col
+}
+
 func (g Grid) ElementAt(row, col int) int {
 	ix := index(row, col)
 	return g[ix]
@@ -117,24 +123,63 @@ func (g Grid) Candidates(row, col int) []int {
 	return candidates
 }
 
+//// Recursive solver
+// func (g Grid) Solve() (Grid, error) {
+// 	i := g.FirstEmptyCell()
+
+// 	if i == -1 {
+// 		return g, nil
+// 	}
+
+// 	row := i / 9
+// 	col := i % 9
+
+// 	candidates := g.Candidates(row, col)
+
+// 	for _, v := range candidates {
+// 		result, err := g.WithElementAt(row, col, v).Solve()
+// 		if err == nil {
+// 			return result, nil
+// 		}
+// 	}
+
+// 	return g, fmt.Errorf("No solutions found")
+// }
+
+//// Iterative solver
 func (g Grid) Solve() (Grid, error) {
+	firstG := g
+	var err error
 	i := g.FirstEmptyCell()
 
 	if i == -1 {
 		return g, nil
 	}
 
-	row := i / 9
-	col := i % 9
+	S := GridStack{}
 
+	row, col := rc(i)
 	candidates := g.Candidates(row, col)
 
-	for _, v := range candidates {
-		result, err := g.WithElementAt(row, col, v).Solve()
-		if err == nil {
-			return result, nil
-		}
-	}
+	for {
 
-	return g, fmt.Errorf("No solutions found")
+		for _, v := range candidates {
+			S.Push(g.WithElementAt(row, col, v))
+		}
+
+		g, err = S.Pop()
+
+		if err != nil {
+			return firstG, fmt.Errorf("No solutions found")
+		}
+
+		i = g.FirstEmptyCell()
+
+		if i == -1 {
+			return g, nil
+		}
+
+		row, col = rc(i)
+		candidates = g.Candidates(row, col)
+	}
 }
